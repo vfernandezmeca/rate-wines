@@ -4,11 +4,25 @@
   <meta charset="utf-8">
   <title>Redireccionando</title>
   <script>
-    // Redireccionar todas las rutas a index.html
-    const segmentCount = 1;
-    const l = window.location;
-    const port = l.port ? ':' + l.port : '';
-    const redirectUrl = `${l.protocol}//${l.hostname}${port}/rate-wines/index.html`;
+    // Configuración específica del sitio
+    var pathSegmentsToKeep = 1;
+
+    // Redireccionar todas las rutas a index.html preservando la ruta
+    var l = window.location;
+    
+    // Construir la URL en función de dónde estamos alojados
+    var origin = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '');
+    var baseUrl = origin + l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/');
+    
+    // Redireccionar a la página principal si estamos en una ruta desconocida
+    var redirectUrl = baseUrl + '/rate-wines/';
+    
+    // Si hay una ruta específica, añadirla a la URL
+    if (l.pathname.split('/').length > pathSegmentsToKeep + 1) {
+      var path = l.pathname.split('/').slice(pathSegmentsToKeep).join('/');
+      redirectUrl = baseUrl + '/' + path;
+    }
+    
     window.location.href = redirectUrl;
   </script>
 </head>
