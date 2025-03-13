@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteBase /rate-wines/
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /rate-wines/index.html [L] 
