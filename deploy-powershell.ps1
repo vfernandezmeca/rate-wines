@@ -3,39 +3,48 @@
 # Abortar en caso de errores
 $ErrorActionPreference = "Stop"
 
-Write-Host "Iniciando proceso de despliegue a GitHub Pages..." -ForegroundColor Green
+Write-Host "Iniciando proceso de despliegue..."
 
-# Compilar el proyecto
-Write-Host "Compilando el proyecto..." -ForegroundColor Yellow
+# Compilar
+Write-Host "Compilando la aplicación..."
 npm run build
 
 # Navegar al directorio de compilación
-Write-Host "Navegando al directorio de compilación..." -ForegroundColor Yellow
 cd dist
 
 # Crear archivo .nojekyll para evitar procesamiento Jekyll
-Write-Host "Creando archivo .nojekyll..." -ForegroundColor Yellow
-New-Item -Path . -Name ".nojekyll" -ItemType "file" -Force | Out-Null
+Write-Host "Creando archivo .nojekyll..."
+New-Item -ItemType File -Path ".nojekyll" -Force | Out-Null
 
-# Inicializar repositorio Git
-Write-Host "Inicializando repositorio Git..." -ForegroundColor Yellow
-git init
-git checkout -b main
+# Asegurarse de que los archivos de configuración están presentes
+Write-Host "Copiando archivos de configuración adicionales..."
+Copy-Item -Path "../public/_headers" -Destination "./_headers" -Force
+Copy-Item -Path "../public/.htaccess" -Destination "./.htaccess" -Force
 
-# Añadir todos los archivos
-Write-Host "Añadiendo archivos al repositorio..." -ForegroundColor Yellow
+# Inicializar repositorio si no existe
+if (Test-Path ".git") {
+    Write-Host "Repositorio Git ya inicializado"
+} else {
+    Write-Host "Inicializando repositorio Git..."
+    git init
+    git checkout -b main
+}
+
+# Añadir cambios al área de preparación
+Write-Host "Preparando cambios para commit..."
 git add -A
 
-# Hacer commit
-Write-Host "Haciendo commit..." -ForegroundColor Yellow
-git commit -m "deploy"
+# Hacer commit con mensaje
+Write-Host "Creando commit..."
+git commit -m "Deploy"
 
-# Pushar a GitHub Pages
-Write-Host "Desplegando a GitHub Pages..." -ForegroundColor Cyan
+# Desplegar a GitHub Pages
+Write-Host "Desplegando a GitHub Pages..."
 git push -f https://github.com/vfernandezmeca/rate-wines.git main:gh-pages
 
-# Volver al directorio principal
 cd ..
+
+Write-Host "¡Despliegue completado exitosamente!" -ForegroundColor Green
 
 Write-Host "¡Despliegue completado! Tu aplicación estará disponible en:" -ForegroundColor Green
 Write-Host "https://vfernandezmeca.github.io/rate-wines/" -ForegroundColor Magenta 
