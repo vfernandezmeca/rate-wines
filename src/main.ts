@@ -9,7 +9,7 @@ const app = createApp(App)
 app.mount('#app')
 
 // Manejo de errores global
-app.config.errorHandler = (err, instance, info) => {
+app.config.errorHandler = (err, _instance, info) => {
   console.error('Error en la aplicación:', err)
   console.error('Información adicional:', info)
 }
