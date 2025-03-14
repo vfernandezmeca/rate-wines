@@ -70,7 +70,7 @@
           :key="'viewed-' + index"
           class="viewed-card card-flipped"
           :class="{ 'viewed-card-golden': card.hasGoldenCoupon }"
-          @click="openViewedCard(card, index)"
+          @click="openViewedCard()"
         >
           <div class="card-inner">
             <div class="card-front">
@@ -142,7 +142,6 @@ const cards = ref<Card[]>([
     message: "¡Feliz cumpleaños, Paulina! Hoy comenzamos en el rocódromo. ¡Prepárate y trae una muda de ropa! Va a ser una actividad muy divertida.",
     icon: "🧗‍♀️",
     unlockTime: "08:00", // Se desbloquea desde las 8:00
-    manuallyUnlocked: true, // Primera carta siempre desbloqueada manualmente
     viewed: false
   },
   {
@@ -230,18 +229,11 @@ const cardsToShow = computed(() => {
     return [cards.value[0]];
   }
   
-  // Obtener el índice de la primera tarjeta (Rocódromo, 08:00)
-  const firstCardIndex = cards.value.findIndex(card => card.manuallyUnlocked === true || card.unlockTime === "08:00");
-  
   // Separar la primera tarjeta (siempre desbloqueada) del resto
-  const initialCard = notViewedCards.find(card => 
-    card.manuallyUnlocked === true || card.unlockTime === "08:00"
-  );
-  const otherCards = notViewedCards.filter(card => 
-    card.manuallyUnlocked !== true && card.unlockTime !== "08:00"
-  );
+  const initialCard = notViewedCards.find(card => getOriginalIndex(card) === 0);
+  const otherCards = notViewedCards.filter(card => getOriginalIndex(card) !== 0);
   
-  // Ordenar las demás tarjetas por tiempo de desbloqueo
+  // Ordenar las demás tarjetas por tiempo de desbloqueo (de mayor a menor)
   const sortedOtherCards = otherCards.sort((a, b) => {
     const [hoursA, minutesA] = a.unlockTime.split(':').map(Number);
     const [hoursB, minutesB] = b.unlockTime.split(':').map(Number);
@@ -249,7 +241,7 @@ const cardsToShow = computed(() => {
     const timeA = hoursA * 60 + minutesA;
     const timeB = hoursB * 60 + minutesB;
     
-    return timeB - timeA; // Orden inverso: de mayor a menor
+    return timeB - timeA; // Orden descendente: de mayor a menor
   });
   
   // Combinar la tarjeta inicial con el resto ordenado por tiempo
@@ -269,14 +261,6 @@ const sortedViewedCards = computed(() => {
     
     return timeB - timeA; // Orden inverso: de mayor a menor
   });
-});
-
-// Formatear la hora actual para mostrarla
-const currentTimeDisplay = computed(() => {
-  const hours = currentTime.value.getHours().toString().padStart(2, '0');
-  const minutes = currentTime.value.getMinutes().toString().padStart(2, '0');
-  const seconds = currentTime.value.getSeconds().toString().padStart(2, '0');
-  return `${hours}:${minutes}:${seconds}`;
 });
 
 // Temporizador hasta la próxima tarjeta
@@ -331,46 +315,6 @@ const nextCardCountdown = computed(() => {
   return `${diffHours.toString().padStart(2, '0')}:${diffMinutes.toString().padStart(2, '0')}:${diffSeconds.toString().padStart(2, '0')}`;
 });
 
-// Etiqueta para la próxima tarjeta
-const nextCardLabel = computed(() => {
-  // Buscar la próxima tarjeta bloqueada
-  const lockedCards = cards.value.filter((card, index) => 
-    !isCardUnlocked(card, index) && !card.viewed
-  );
-  
-  if (lockedCards.length === 0) {
-    return "Estado";
-  }
-  
-  return "Próxima sorpresa:";
-});
-
-// Obtener el ícono de la próxima tarjeta
-const getNextCardIcon = () => {
-  // Buscar la próxima tarjeta bloqueada
-  const lockedCards = cards.value.filter((card, index) => 
-    !isCardUnlocked(card, index) && !card.viewed
-  );
-  
-  if (lockedCards.length === 0) {
-    return "✅";
-  }
-  
-  // Ordenar las tarjetas bloqueadas por hora de desbloqueo
-  lockedCards.sort((a, b) => {
-    const timeA = new Date();
-    const timeB = new Date();
-    const [hoursA, minutesA] = a.unlockTime.split(':').map(Number);
-    const [hoursB, minutesB] = b.unlockTime.split(':').map(Number);
-    
-    timeA.setHours(hoursA, minutesA, 0, 0);
-    timeB.setHours(hoursB, minutesB, 0, 0);
-    
-    return timeA.getTime() - timeB.getTime();
-  });
-  
-  return lockedCards[0].icon;
-};
 
 // Número de cartas desbloqueadas
 const unlockedCount = computed(() => {
@@ -672,7 +616,7 @@ const updateClock = () => {
 };
 
 // Función para abrir una carta ya vista
-const openViewedCard = (card: Card, index: number) => {
+const openViewedCard = () => {
   // Simplemente mostrar un diálogo o lanzar una animación simple
   playCardSound();
 };
@@ -1380,56 +1324,6 @@ h1::after {
   100% {
     transform: translate(-50%, -50%) scale(1.5);
     opacity: 0;
-  }
-}
-
-@keyframes bounce-up {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-  }
-  40% {
-    transform: translate(-50%, -50%) scale(1.2);
-    opacity: 1;
-  }
-  60% {
-    transform: translate(-50%, -50%) scale(0.8);
-    opacity: 1;
-  }
-  80% {
-    transform: translate(-50%, -80%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -100%) scale(0.5);
-    opacity: 0;
-  }
-}
-
-@keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  20%, 60% {
-    transform: translateX(-5px);
-  }
-  40%, 80% {
-    transform: translateX(5px);
-  }
-}
-
-@keyframes pulse-glow {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.2);
   }
 }
 
