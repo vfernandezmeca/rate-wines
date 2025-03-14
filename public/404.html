@@ -10,12 +10,12 @@
     // Redireccionar todas las rutas a index.html preservando la ruta
     var l = window.location;
     
-    // Construir la URL en función de dónde estamos alojados
-    var origin = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '');
-    var baseUrl = origin + l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/');
+    // Extraer la URL base
+    var baseUrl = window.location.protocol + '//' + window.location.hostname;
+    if (window.location.port) baseUrl += ':' + window.location.port;
     
-    // Redireccionar a la página principal si estamos en una ruta desconocida
-    var redirectUrl = baseUrl + '/rate-wines/';
+    // Redirigir a la página principal
+    var redirectUrl = baseUrl + '/';
     
     // Si hay una ruta específica, añadirla a la URL
     if (l.pathname.split('/').length > pathSegmentsToKeep + 1) {

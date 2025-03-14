@@ -747,6 +747,9 @@ const resetAppData = () => {
 
 // Manejar inicio del toque
 const handleTouchStart = (event: TouchEvent, index: number) => {
+  // Prevenir el comportamiento predeterminado para evitar desplazamientos no deseados
+  event.preventDefault();
+  
   // Guarda la posición X inicial del toque
   startX.value = event.touches[0].clientX;
   isDragging.value = false;
@@ -768,10 +771,12 @@ const handleTouchMove = (event: TouchEvent) => {
     // Aplicar efecto de resistencia en los extremos
     if (Math.abs(diffX) > maxDragOffset) {
       dragOffset.value = diffX > 0 
-        ? maxDragOffset
+        ? maxDragOffset 
         : -maxDragOffset;
     } else {
-      dragOffset.value = diffX;
+      // Añadir efecto de resistencia proporcional
+      const resistance = 0.8;
+      dragOffset.value = diffX * resistance;
     }
     
     // Prevenir scroll si estamos arrastrando
@@ -784,11 +789,19 @@ const handleTouchEnd = () => {
   if (isDragging.value) {
     isDragging.value = false;
     
-    // Animación de rebote al soltar
-    dragOffset.value = 0;
+    // Animación de rebote al soltar con efecto de resorte
+    const springEffect = () => {
+      // Reducir gradualmente el desplazamiento para crear efecto de rebote
+      if (Math.abs(dragOffset.value) < 2) {
+        dragOffset.value = 0;
+        return;
+      }
+      
+      dragOffset.value = dragOffset.value * 0.8;
+      requestAnimationFrame(springEffect);
+    };
     
-    // Si se arrastró bastante, podríamos implementar acción adicional
-    // como avanzar a la siguiente tarjeta, etc.
+    springEffect();
   }
   
   currentCardIndex.value = -1;
@@ -1266,6 +1279,23 @@ h1::after {
     text-align: center;
     font-size: 1.1rem;
     line-height: 1.5;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 67, 147, 0.3) transparent;
+    
+    &::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(232, 67, 147, 0.3);
+      border-radius: 10px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
   }
 }
 
@@ -1551,6 +1581,35 @@ h1::after {
 
 /* Estilos responsivos */
 @media (max-width: 768px) {
+  .cards-home {
+    padding: 1.5rem 1rem;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h1::before, h1::after {
+    font-size: 1.8rem;
+    position: relative;
+    top: 0;
+    display: inline-block;
+    margin: 0 5px;
+  }
+  
+  h1::before {
+    left: 0;
+  }
+  
+  h1::after {
+    right: 0;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
   .time-banner {
     margin-bottom: 1.5rem;
     padding: 0.5rem 1rem;
@@ -1561,18 +1620,20 @@ h1::after {
   }
   
   .cards-container {
-    height: 370px; /* Reducida para ajustarse mejor a móviles */
+    height: 400px; /* Altura suficiente para mostrar la tarjeta completa */
     max-width: 100%;
     padding: 0;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    overflow: visible;
+    perspective: 1200px;
   }
   
   .card {
-    width: 200px; /* Reducido para pantallas pequeñas */
-    height: 350px; /* Reducido para pantallas pequeñas */
+    width: 260px; /* Tamaño de tarjeta para pantallas medianas */
+    height: 350px;
     left: 50%;
-    transform-origin: center bottom;
-    margin-left: -190px; /* La mitad del ancho para centrar */
+    transform-origin: center center;
+    margin-left: -130px; /* La mitad del ancho para centrar correctamente */
   }
   
   /* Ajustar posición en dispositivos pequeños */
@@ -1580,7 +1641,24 @@ h1::after {
     .card {
       width: 230px;
       height: 320px;
-      margin-left: -115px;
+      margin-left: -115px; /* La mitad del ancho para centrar correctamente */
+    }
+  }
+
+  /* Ajuste adicional para dispositivos muy pequeños */
+  @media (max-width: 320px) {
+    .card {
+      width: 210px;
+      height: 300px;
+      margin-left: -105px;
+    }
+    
+    .card-content h3 {
+      font-size: 1rem;
+    }
+    
+    .card-content p {
+      font-size: 0.85rem;
     }
   }
   
@@ -1606,24 +1684,29 @@ h1::after {
     padding-right: 5px;
   }
   
-  /* Ajuste al posicionamiento para evitar que se salgan */
+  /* Ajuste del posicionamiento de las tarjetas */
+  .getCardPosition, .getCardRotation {
+    /* Reducir valores para evitar que las tarjetas se salgan */
+    transform: scale(0.95);
+  }
+  
+  /* Mejoras para tarjetas bloqueadas */
   .card-locked {
     top: 5px; /* Desplazar ligeramente hacia abajo */
+    transform: scale(0.9) !important;
   }
   
-  /* Reducir rotación para evitar que se salgan */
-  .card-active:not(.card-flipped) {
-    max-width: 90%; /* Limitar el ancho para asegurar que cabe en pantalla */
-  }
-  
-  /* Mejora para scroll en tarjetas */
-  .card-content p::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  .card-content p::-webkit-scrollbar-thumb {
-    background-color: rgba(232, 67, 147, 0.3);
-    border-radius: 10px;
+  /* Indicador visual de deslizamiento */
+  .cards-container::after {
+    content: "↔️ Desliza para ver más";
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: #b15b88;
+    opacity: 0.8;
+    animation: pulse 2s infinite;
   }
   
   .viewed-card {
@@ -1633,12 +1716,6 @@ h1::after {
   
   .viewed-cards-container {
     gap: 1rem;
-  }
-  
-  /* Ajustar rotación de cartas para dispositivos móviles */
-  .getCardRotation {
-    /* Reducir el ángulo de rotación para evitar que se salgan */
-    max-rotate: 5deg;
   }
 }
 
@@ -1808,6 +1885,62 @@ h1::after {
   100% {
     opacity: 0.8;
     transform: scale(1);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 105, 180, 0.9);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes bounce-up {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -80%) scale(1.2);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -40%) scale(0.8);
+  }
+  85% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
   }
 }
 </style> 
