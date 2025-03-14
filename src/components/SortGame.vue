@@ -9,20 +9,23 @@
         class="list-group" 
         item-key="id"
         :options="{
-          animation: 300,
-          delay: 30,
-          delayOnTouchOnly: true,
-          touchStartThreshold: 3,
+          animation: 200,
+          delay: 0,
+          delayOnTouchOnly: false,
+          touchStartThreshold: 1,
           forceFallback: true,
           ghostClass: 'ghost-item',
           chosenClass: 'chosen-item',
           dragClass: 'drag-item',
-          scrollSensitivity: 30,
+          scrollSensitivity: 100,
           preventDefaultOnDrag: true,
           lockAxis: 'y',
           lockToContainerEdges: true,
           fallbackOnBody: false,
-          scroll: false
+          scroll: true,
+          scrollSpeed: 50,
+          fallbackTolerance: 1,
+          touchAction: 'none'
         }"
         @start="onDragStart"
         @end="onDragEnd"
@@ -114,6 +117,19 @@ const onDragStart = (e: any) => {
   draggingId.value = e.item.__draggable_context.element.id
   currentPosition.value = e.oldIndex
   
+  // Optimización para dispositivos móviles
+  if ('ontouchstart' in window) {
+    // Ajustar la posición del elemento arrastrado para móviles
+    const dragElement = document.querySelector('.sortable-drag') as HTMLElement;
+    if (dragElement) {
+      // Mejorar la posición para que se sienta más natural bajo el dedo
+      dragElement.style.transform = 'translate3d(0px, 0px, 0px)';
+      dragElement.style.transition = 'transform 0.05s';
+      dragElement.style.willChange = 'transform';
+      dragElement.style.zIndex = '1000';
+    }
+  }
+  
   // Efecto de sonido al empezar a arrastrar
   playSound('pickup')
   
@@ -130,6 +146,11 @@ const onDragStart = (e: any) => {
 const onChange = (e: any) => {
   if (e.moved) {
     currentPosition.value = e.moved.newIndex
+    
+    // Añadir feedback sutil cuando se mueve entre posiciones
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(20)
+    }
   }
 }
 
@@ -362,6 +383,12 @@ const onDragEnd = () => {
     sparkle.remove()
   }, 500)
   
+  // Eliminamos cualquier elemento de arrastre residual
+  const dragElements = document.querySelectorAll('.sortable-drag');
+  dragElements.forEach(el => {
+    (el as HTMLElement).style.display = 'none';
+  });
+  
   // Resetear el id de arrastre
   draggingId.value = null
   resultMessage.value = ''
@@ -492,17 +519,24 @@ h1::after {
   border: 2px dashed #ffb6c1 !important;
   max-width: 100%;
   box-sizing: border-box;
+  transform: translateY(0);
+  position: relative;
+  touch-action: none !important;
 }
 
 .chosen-item {
   transform: scale(1.02);
   box-shadow: 0 10px 20px rgba(255, 105, 180, 0.5);
   border-color: #ff69b4;
+  touch-action: none !important;
 }
 
 .drag-item {
   opacity: 0.8;
   background: linear-gradient(135deg, #fff5f9 0%, #ffecf2 100%);
+  touch-action: none !important;
+  position: fixed;
+  z-index: 1000;
 }
 
 .item-image {
@@ -738,10 +772,72 @@ h1::after {
   }
 }
 
+/* Estilos específicos para Sortable */
+:deep(.sortable-drag) {
+  opacity: 0.9 !important;
+  position: absolute !important;
+  z-index: 1000 !important;
+  pointer-events: none !important;
+  touch-action: none !important;
+  will-change: transform !important;
+  transform: translate3d(0, 0, 0) !important;
+  box-shadow: 0 10px 30px rgba(232, 67, 147, 0.6) !important;
+  transition: transform 0.05s !important;
+}
+
+:deep(.sortable-ghost) {
+  opacity: 0.3 !important;
+  background-color: #ffecf2 !important;
+  border: 2px dashed #ff69b4 !important;
+}
+
+:deep(.sortable-chosen) {
+  background-color: #fff5f9 !important;
+}
+
+/* Animaciones de transición para cuando los elementos se reordenan */
+.list-group-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Mejora de la respuesta táctil */
+@supports (-webkit-touch-callout: none) {
+  /* Estilos específicos para iOS */
+  .list-group-item {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  :deep(.sortable-drag) {
+    transform: translateY(-10px) !important;
+  }
+}
+
 /* Ajustes para dispositivos táctiles */
 @media (pointer: coarse) {
   .list-group-item {
-    touch-action: none;
+    touch-action: none !important;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+    margin-bottom: 1.5rem;
+    padding: 1.2rem;
+  }
+  
+  .ghost-item, .chosen-item, .drag-item {
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    touch-action: none !important;
+  }
+  
+  .list-group {
+    touch-action: pan-y !important;
+    will-change: transform;
+  }
+  
+  .sort-game, .game-container {
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch;
   }
 }
 </style> 
