@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SortGame from './components/SortGame.vue'
+// No necesitamos importar SortGame ya que ahora usamos enrutamiento
 </script>
 
 <template>
@@ -8,7 +8,9 @@ import SortGame from './components/SortGame.vue'
     <div class="decoration top-right">🎀</div>
     <div class="decoration bottom-left">🍷</div>
     <div class="decoration bottom-right">🎀</div>
-    <SortGame />
+    
+    <!-- Usar router-view en lugar de SortGame -->
+    <router-view></router-view>
   </div>
 </template>
 

@@ -53,6 +53,7 @@
       <button class="check-button" @click="checkOrder">Comprobar</button>
       <button class="reset-button" @click="resetOrder">Reiniciar</button>
       <button class="solution-button" @click="showSolution" v-if="resultMessage && !isCorrect">Ver solución</button>
+      <router-link to="/" class="back-button">Volver a las Cartas</router-link>
     </div>
     
     <div v-if="resultMessage" class="result" :class="{ 'success': isCorrect, 'error': !isCorrect }">
@@ -1023,5 +1024,31 @@ h1::after {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+.back-button {
+  background-color: #e0cffc;
+  color: #6a3093;
+  border: 2px solid #8a5cdd;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.1rem;
+  position: relative;
+  text-decoration: none;
+  border-radius: 15px;
+  display: inline-block;
+  transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(106, 48, 147, 0.2);
+  margin-top: 0.5rem;
+}
+
+.back-button::before {
+  content: "🔙";
+  margin-right: 5px;
+}
+
+.back-button:hover {
+  background-color: #d2b7ff;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(106, 48, 147, 0.3);
 }
 </style> 

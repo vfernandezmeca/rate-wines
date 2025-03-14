@@ -49,22 +49,6 @@
           heart.style.transform = `scale(${0.5 + Math.random()})`;
           heartBg.appendChild(heart);
         }
-
-        // Efecto de brillo al hacer clic
-        document.addEventListener('click', function(e) {
-          const sparkle = document.createElement('div');
-          sparkle.className = 'sparkle-animation';
-          sparkle.style.left = `${e.pageX - 15}px`;
-          sparkle.style.top = `${e.pageY - 15}px`;
-          sparkle.style.width = '30px';
-          sparkle.style.height = '30px';
-          sparkle.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffb6c1"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/></svg>')`;
-          document.body.appendChild(sparkle);
-          
-          setTimeout(() => {
-            sparkle.remove();
-          }, 700);
-        });
         
         // Detectar arrastre para añadir/quitar clase al body
         document.addEventListener('mousedown', function() {
