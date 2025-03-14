@@ -24,7 +24,13 @@
           'card-golden': card.hasGoldenCoupon
         }"
         @click="flipCard(index, $event)"
-        :style="{ transform: `translateX(${getCardPosition(index)}px) rotate(${getCardRotation(index)}deg)` }"
+        @touchstart="handleTouchStart($event, index)"
+        @touchmove="handleTouchMove($event)"
+        @touchend="handleTouchEnd()"
+        :style="{ 
+          transform: `translateX(${getCardPosition(index) + dragOffset}px) rotate(${getCardRotation(index)}deg)`,
+          transition: isDragging ? 'none' : 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+        }"
       >
         <div class="unlock-animation" v-if="unlockingCard === index">
           <div class="unlock-rays"></div>
@@ -204,6 +210,14 @@ const clockInterval = ref<number | null>(null);
 const manuallyUnlockedCards = ref<boolean[]>(Array(cards.value.length).fill(false));
 const unlockingCard = ref<number | null>(null); // Controla qué carta está siendo desbloqueada
 const viewedCards = ref<Card[]>([]);
+
+// Variables para el arrastre táctil
+const isDragging = ref(false);
+const dragOffset = ref(0);
+const startX = ref(0);
+const currentCardIndex = ref(-1);
+const dragThreshold = 5; // Mínimo desplazamiento para considerar un arrastre (pixels)
+const maxDragOffset = 100; // Máximo desplazamiento permitido
 
 // Filtrar tarjetas para mostrar todas las no vistas, incluyendo las bloqueadas
 const cardsToShow = computed(() => {
@@ -731,6 +745,55 @@ const resetAppData = () => {
   }
 };
 
+// Manejar inicio del toque
+const handleTouchStart = (event: TouchEvent, index: number) => {
+  // Guarda la posición X inicial del toque
+  startX.value = event.touches[0].clientX;
+  isDragging.value = false;
+  currentCardIndex.value = index;
+};
+
+// Manejar movimiento durante el toque
+const handleTouchMove = (event: TouchEvent) => {
+  if (currentCardIndex.value === -1) return;
+  
+  // Calcular el desplazamiento
+  const currentX = event.touches[0].clientX;
+  const diffX = currentX - startX.value;
+  
+  // Solo iniciar el arrastre si supera el umbral
+  if (Math.abs(diffX) > dragThreshold) {
+    isDragging.value = true;
+    
+    // Aplicar efecto de resistencia en los extremos
+    if (Math.abs(diffX) > maxDragOffset) {
+      dragOffset.value = diffX > 0 
+        ? maxDragOffset
+        : -maxDragOffset;
+    } else {
+      dragOffset.value = diffX;
+    }
+    
+    // Prevenir scroll si estamos arrastrando
+    event.preventDefault();
+  }
+};
+
+// Manejar fin del toque
+const handleTouchEnd = () => {
+  if (isDragging.value) {
+    isDragging.value = false;
+    
+    // Animación de rebote al soltar
+    dragOffset.value = 0;
+    
+    // Si se arrastró bastante, podríamos implementar acción adicional
+    // como avanzar a la siguiente tarjeta, etc.
+  }
+  
+  currentCardIndex.value = -1;
+};
+
 // Al montar el componente
 onMounted(() => {
   // Iniciar el reloj
@@ -792,7 +855,6 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .cards-home {
   max-width: 900px;
-  margin: 0 auto;
   padding: 2rem;
   text-align: center;
   min-height: 100vh;
@@ -874,11 +936,12 @@ h1::after {
 
 .cards-container {
   position: relative;
-  height: 400px;
+  height: 450px; /* Aumentada para dar más espacio */
   width: 100%;
   max-width: 350px;
   margin: 0 auto;
   perspective: 1000px;
+  overflow: visible; /* Permite que las tarjetas se vean correctamente fuera del contenedor */
 }
 
 .card {
@@ -898,6 +961,19 @@ h1::after {
   &:hover {
     transform: translateY(-10px) translateX(0) rotate(0deg) !important;
     box-shadow: 0 15px 30px rgba(255, 105, 180, 0.5);
+  }
+  
+  /* Indicador de deslizamiento para usuarios en dispositivos móviles */
+  &::after {
+    content: "↔️";
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    opacity: 0.5;
+    animation: swipeHint 2s infinite;
+    display: none;
   }
 }
 
@@ -1304,29 +1380,6 @@ h1::after {
   }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-@keyframes expand {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.5);
-    opacity: 0;
-  }
-}
-
 .viewed-cards-section {
   margin-top: 3rem;
   width: 100%;
@@ -1498,74 +1551,110 @@ h1::after {
 
 /* Estilos responsivos */
 @media (max-width: 768px) {
-  .card {
-    width: 260px;
-    height: 360px;
-  }
-  
-  h1 {
-    font-size: 2rem;
-  }
-  
-  .subtitle {
-    font-size: 1rem;
-  }
-  
-  .card-content p {
-    font-size: 1rem;
-  }
-  
-  .play-button {
-    padding: 0.7rem 1.5rem;
-    font-size: 1.1rem;
+  .time-banner {
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 1rem;
   }
   
   .current-time {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
   }
   
-  .time-banner {
-    padding: 0.5rem 1.2rem;
-    margin-bottom: 2rem;
+  .cards-container {
+    height: 370px; /* Reducida para ajustarse mejor a móviles */
+    max-width: 100%;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+  
+  .card {
+    width: 200px; /* Reducido para pantallas pequeñas */
+    height: 350px; /* Reducido para pantallas pequeñas */
+    left: 50%;
+    transform-origin: center bottom;
+    margin-left: -190px; /* La mitad del ancho para centrar */
+  }
+  
+  /* Ajustar posición en dispositivos pequeños */
+  @media (max-width: 360px) {
+    .card {
+      width: 230px;
+      height: 320px;
+      margin-left: -115px;
+    }
+  }
+  
+  .card-front, .card-back {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .card-front .card-decoration {
+    font-size: 4rem;
+  }
+  
+  .card-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+  
+  .card-content p {
+    font-size: 0.95rem;
+    line-height: 1.3;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+  
+  /* Ajuste al posicionamiento para evitar que se salgan */
+  .card-locked {
+    top: 5px; /* Desplazar ligeramente hacia abajo */
+  }
+  
+  /* Reducir rotación para evitar que se salgan */
+  .card-active:not(.card-flipped) {
+    max-width: 90%; /* Limitar el ancho para asegurar que cabe en pantalla */
+  }
+  
+  /* Mejora para scroll en tarjetas */
+  .card-content p::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .card-content p::-webkit-scrollbar-thumb {
+    background-color: rgba(232, 67, 147, 0.3);
+    border-radius: 10px;
   }
   
   .viewed-card {
-    width: 180px;
-    height: 320px;
-  }
-  
-  .viewed-card .card-content h3 {
-    font-size: 1rem;
-    margin-bottom: 4px;
-  }
-  
-  .viewed-card .card-content p {
-    font-size: 0.8rem;
-    line-height: 1.2;
-    flex-grow: 1;
-    max-height: 180px;
-  }
-  
-  .viewed-card .card-content .card-emoji {
-    font-size: 2rem;
-    margin: 2px 0;
-  }
-  
-  .viewed-card .card-content .card-game-button .play-button {
-    padding: 0.3rem 0.8rem;
-    font-size: 0.8rem;
-  }
-  
-  .viewed-title {
-    font-size: 1.5rem;
+    width: 170px;
+    height: 280px;
   }
   
   .viewed-cards-container {
     gap: 1rem;
   }
+  
+  /* Ajustar rotación de cartas para dispositivos móviles */
+  .getCardRotation {
+    /* Reducir el ángulo de rotación para evitar que se salgan */
+    max-rotate: 5deg;
+  }
 }
 
-// Estilo para el contenido bloqueado
+@keyframes swipeHint {
+  0%, 100% {
+    transform: translateX(-50%);
+  }
+  50% {
+    transform: translateX(-70%);
+  }
+  75% {
+    transform: translateX(-30%);
+  }
+}
+
+/* Estilo para el contenido bloqueado */
 .card-locked-content {
   display: flex;
   flex-direction: column;
@@ -1601,7 +1690,7 @@ h1::after {
   }
 }
 
-// Estilos para el mensaje final
+/* Estilos para el mensaje final */
 .final-message-container {
   margin-top: 2rem;
   width: 100%;
@@ -1647,7 +1736,7 @@ h1::after {
   }
 }
 
-// Estilos para el botón de reinicio
+/* Estilos para el botón de reinicio */
 .reset-button-container {
   margin-top: 0.5rem;
   width: 100%;
