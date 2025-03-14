@@ -154,7 +154,7 @@ const cards = ref<Card[]>([
     title: "Hora de comer",
     message: "Vamos a McDonald's para disfrutar de una rica comida.",
     icon: "🍔",
-    unlockTime: "14:00", // Se desbloquea a las 13:00
+    unlockTime: "13:50", // Se desbloquea a las 13:00
     viewed: false
   },
   {
