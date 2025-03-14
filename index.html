@@ -13,6 +13,21 @@
     <link rel="stylesheet" href="./cute-theme.css" />
     <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
     <title>Juego Cute de Ordenar Vinos</title>
+    <style>
+      /* Estilos para evitar scroll horizontal durante el arrastre */
+      html, body {
+        overflow-x: hidden !important;
+        width: 100%;
+        position: relative;
+        max-width: 100%;
+        touch-action: pan-y;
+      }
+      
+      /* Estilo específico para el arrastre */
+      body.dragging {
+        overflow: hidden !important;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
@@ -49,6 +64,23 @@
           setTimeout(() => {
             sparkle.remove();
           }, 700);
+        });
+        
+        // Detectar arrastre para añadir/quitar clase al body
+        document.addEventListener('mousedown', function() {
+          document.body.classList.add('dragging');
+        });
+        
+        document.addEventListener('mouseup', function() {
+          document.body.classList.remove('dragging');
+        });
+        
+        document.addEventListener('touchstart', function() {
+          document.body.classList.add('dragging');
+        });
+        
+        document.addEventListener('touchend', function() {
+          document.body.classList.remove('dragging');
         });
       });
     </script>

@@ -19,6 +19,7 @@ body {
   font-family: 'Comic Sans MS', 'Marker Felt', cursive;
   background-color: #fff5f9;
   background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+  overflow-x: hidden;
 }
 
 .app-container {
@@ -30,6 +31,9 @@ body {
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, #fff5f9 0%, #ffecf2 100%);
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 /* Elementos decorativos animados */

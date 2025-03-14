@@ -9,25 +9,40 @@
         class="list-group" 
         item-key="id"
         :options="{
-          animation: 150,
-          delay: 50,
+          animation: 300,
+          delay: 30,
           delayOnTouchOnly: true,
-          touchStartThreshold: 5,
-          forceFallback: true
+          touchStartThreshold: 3,
+          forceFallback: true,
+          ghostClass: 'ghost-item',
+          chosenClass: 'chosen-item',
+          dragClass: 'drag-item',
+          scrollSensitivity: 30,
+          preventDefaultOnDrag: true,
+          lockAxis: 'y',
+          lockToContainerEdges: true,
+          fallbackOnBody: false,
+          scroll: false
         }"
+        @start="onDragStart"
         @end="onDragEnd"
-        handle=".handle"
+        @change="onChange"
       >
-        <template #item="{ element }">
-          <div class="list-group-item">
-            <div class="handle">
-              <i class="fas fa-grip-lines"></i>
-            </div>
+        <template #item="{ element, index }">
+          <div 
+            class="list-group-item" 
+            :class="{ 'dragging': element.id === draggingId }"
+            @mouseenter="hoverIndex = index"
+            @mouseleave="hoverIndex = -1"
+          >
             <div class="item-image">
               <img :src="element.img" :alt="element.text">
             </div>
             <div class="item-content">
               {{ element.text }}
+            </div>
+            <div class="item-position" :class="{ 'visible': element.id === draggingId || hoverIndex === index }">
+              {{ index + 1 }}
             </div>
           </div>
         </template>
@@ -48,14 +63,14 @@
       <div v-for="(poop, index) in poopEmojis" :key="index" 
            class="poop-emoji" 
            :style="{ left: poop.left + 'px', animationDuration: poop.duration + 's' }">
-        🌟
+        {{ isCorrect ? '🌟' : '💩' }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import draggable from 'vuedraggable'
 import confetti from 'canvas-confetti'
 
@@ -90,7 +105,42 @@ const resultMessage = ref('')
 const isCorrect = ref(false)
 const poopEmojis = ref<{ left: number; duration: number }[]>([])
 const poopContainer = ref<HTMLElement | null>(null)
+const draggingId = ref<number | null>(null)
+const hoverIndex = ref<number>(-1)
+const currentPosition = ref<number>(0)
 
+// Función para manejar el inicio del arrastre
+const onDragStart = (e: any) => {
+  draggingId.value = e.item.__draggable_context.element.id
+  currentPosition.value = e.oldIndex
+  
+  // Efecto de sonido al empezar a arrastrar
+  playSound('pickup')
+  
+  // Añadir vibración
+  if (window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate(50)
+  }
+  
+  // Limpiar mensajes anteriores
+  resultMessage.value = ''
+}
+
+// Función para manejar cambios durante el arrastre
+const onChange = (e: any) => {
+  if (e.moved) {
+    currentPosition.value = e.moved.newIndex
+  }
+}
+
+// Prevenir scroll horizontal durante el arrastre
+const preventHorizontalScroll = (e: Event) => {
+  if (draggingId.value !== null) {
+    e.preventDefault();
+  }
+}
+
+// Añadir evento para prevenir scroll
 onMounted(() => {
   // Mezclar los elementos al montar el componente
   items.value = shuffleArray(originalItems)
@@ -109,7 +159,86 @@ onMounted(() => {
   }
   
   document.querySelector('.sort-game')?.appendChild(sparklesContainer)
+  
+  // Prevenir scroll horizontal
+  document.addEventListener('touchmove', preventHorizontalScroll, { passive: false });
+  document.addEventListener('wheel', preventHorizontalScroll, { passive: false });
 })
+
+// Limpiar eventos al desmontar
+onUnmounted(() => {
+  document.removeEventListener('touchmove', preventHorizontalScroll);
+  document.removeEventListener('wheel', preventHorizontalScroll);
+})
+
+// Función para reproducir un efecto de sonido
+const playSound = (type: 'pickup' | 'drop' | 'correct' | 'error') => {
+  // Solo intentar reproducir sonido si el contexto de audio está disponible
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+    
+    // Configurar el tipo de sonido según la acción
+    switch (type) {
+      case 'pickup':
+        // Sonido agudo y corto
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime)
+        oscillator.frequency.exponentialRampToValueAtTime(900, audioContext.currentTime + 0.1)
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        oscillator.start()
+        oscillator.stop(audioContext.currentTime + 0.2)
+        break
+        
+      case 'drop':
+        // Sonido más grave al soltar
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
+        oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.15)
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        oscillator.start()
+        oscillator.stop(audioContext.currentTime + 0.3)
+        break
+        
+      case 'correct':
+        // Sonido alegre para respuesta correcta
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(500, audioContext.currentTime)
+        oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1)
+        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.2)
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4)
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        oscillator.start()
+        oscillator.stop(audioContext.currentTime + 0.4)
+        break
+        
+      case 'error':
+        // Sonido triste para error
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime)
+        oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.2)
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        oscillator.start()
+        oscillator.stop(audioContext.currentTime + 0.3)
+        break
+    }
+  } catch (e) {
+    // Si no se puede reproducir el sonido, simplemente ignoramos el error
+    console.log('Audio no soportado')
+  }
+}
 
 // Función para lanzar confeti cuando el usuario gana
 const fireConfetti = () => {
@@ -198,10 +327,12 @@ const checkOrder = () => {
     isCorrect.value = true
     resultMessage.value = '¡Muy bien! 🎉 ¡Has ordenado los vinos correctamente! 🥳 ¡Eres un/a experto/a en vinos! 💖'
     fireConfetti()
+    playSound('correct')
   } else {
     resultMessage.value = '¡Ups! No está del todo bien 😢 ¡Intenta ordenarlos de nuevo! 💪🏻'
     isCorrect.value = false
     firePoopEmoji()
+    playSound('error')
   }
 }
 
@@ -214,7 +345,25 @@ const resetOrder = () => {
 
 // Maneja el evento onDragEnd
 const onDragEnd = () => {
-  // Puedes añadir un pequeño sonido o efecto aquí si quieres
+  // Efecto de sonido al soltar
+  playSound('drop')
+  
+  // Añadir vibración
+  if (window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate([30, 50, 30])
+  }
+  
+  // Crear un pequeño efecto visual al soltar
+  const sparkle = document.createElement('div')
+  sparkle.className = 'drop-sparkle'
+  document.body.appendChild(sparkle)
+  
+  setTimeout(() => {
+    sparkle.remove()
+  }, 500)
+  
+  // Resetear el id de arrastre
+  draggingId.value = null
   resultMessage.value = ''
 }
 </script>
@@ -294,6 +443,14 @@ h1::after {
   padding: 1.5rem;
   border-radius: 20px;
   border: 2px dashed #ffb6c1;
+  overflow: hidden;
+  position: relative;
+}
+
+.list-group {
+  position: relative;
+  width: 100%;
+  overflow: visible;
 }
 
 .list-group-item {
@@ -305,24 +462,47 @@ h1::after {
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
   border: 2px solid #ffd1dc;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  cursor: grab;
+  will-change: transform, opacity;
+  z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  touch-action: pan-y;
 }
 
 .list-group-item:hover {
-  transform: translateY(-5px);
+  transform: translateY(-3px) scale(1.01);
   box-shadow: 0 8px 16px rgba(255, 182, 193, 0.4);
+  border-color: #ff69b4;
 }
 
-.handle {
-  cursor: grab;
-  padding: 0.5rem;
-  color: #ff6ec4;
-  font-size: 1.2rem;
+.list-group-item.dragging {
+  opacity: 0.9;
+  transform: scale(1.03);
+  box-shadow: 0 12px 20px rgba(255, 105, 180, 0.5);
+  z-index: 10;
 }
 
-.handle::before {
-  content: "👆";
-  margin-right: 5px;
+.ghost-item {
+  opacity: 0.4;
+  background-color: #ffecf2 !important;
+  border: 2px dashed #ffb6c1 !important;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.chosen-item {
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px rgba(255, 105, 180, 0.5);
+  border-color: #ff69b4;
+}
+
+.drag-item {
+  opacity: 0.8;
+  background: linear-gradient(135deg, #fff5f9 0%, #ffecf2 100%);
 }
 
 .item-image {
@@ -332,12 +512,25 @@ h1::after {
   overflow: hidden;
   border-radius: 50%;
   border: 3px solid #ffc0cb;
+  transition: all 0.3s;
+}
+
+.list-group-item:hover .item-image,
+.list-group-item.dragging .item-image {
+  border-color: #ff69b4;
+  transform: scale(1.05);
 }
 
 .item-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: all 0.3s;
+}
+
+.list-group-item:hover .item-image img,
+.list-group-item.dragging .item-image img {
+  transform: scale(1.1);
 }
 
 .item-content {
@@ -345,6 +538,35 @@ h1::after {
   color: #b15b88;
   font-weight: bold;
   font-family: 'Comic Sans MS', 'Marker Felt', cursive;
+  transition: all 0.3s;
+  padding: 0 10px;
+}
+
+.list-group-item:hover .item-content,
+.list-group-item.dragging .item-content {
+  color: #e84393;
+}
+
+.item-position {
+  width: 30px;
+  height: 30px;
+  background-color: #ffb8e9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9d2f70;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  transform: scale(0.8);
+  margin-left: 10px;
+  box-shadow: 0 3px 6px rgba(157, 47, 112, 0.2);
+}
+
+.item-position.visible {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .actions {
@@ -422,6 +644,30 @@ h1::after {
   font-size: 2rem;
 }
 
+.drop-sparkle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  animation: drop-effect 0.5s ease-out;
+}
+
+@keyframes drop-effect {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
 @keyframes fallAnimation {
   0% {
     transform: translateY(0) rotate(0deg);
@@ -467,5 +713,35 @@ h1::after {
   width: 20px;
   height: 20px;
   opacity: 0.6;
+}
+
+/* Añadimos un estilo global para evitar el scroll horizontal */
+:deep(body), :deep(html) {
+  overflow-x: hidden !important;
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+  .list-group-item {
+    padding: 0.8rem;
+  }
+  
+  .item-image {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .item-position {
+    width: 25px;
+    height: 25px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Ajustes para dispositivos táctiles */
+@media (pointer: coarse) {
+  .list-group-item {
+    touch-action: none;
+  }
 }
 </style> 

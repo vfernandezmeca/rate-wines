@@ -12,6 +12,10 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Evitar scroll horizontal en toda la aplicación */
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 a {
@@ -31,6 +35,9 @@ body {
   min-height: 100vh;
   background-color: #fff5f9;
   background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+  overflow-x: hidden; /* Prevenir scroll horizontal */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 h1 {
@@ -75,6 +82,9 @@ button:focus-visible {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevenir scroll horizontal */
 }
 
 @media (prefers-color-scheme: light) {
@@ -88,4 +98,10 @@ button:focus-visible {
   button {
     background-color: #ffc0cb;
   }
+}
+
+/* Estilos globales para elementos arrastrados - previene scroll horizontal */
+.sortable-drag, .sortable-ghost {
+  max-width: 100%;
+  box-sizing: border-box;
 }
