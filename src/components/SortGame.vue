@@ -9,23 +9,20 @@
         class="list-group" 
         item-key="id"
         :options="{
-          animation: 200,
-          delay: 0,
-          delayOnTouchOnly: false,
-          touchStartThreshold: 1,
+          animation: 300,
+          delay: 20,
+          delayOnTouchOnly: true,
+          touchStartThreshold: 3,
           forceFallback: true,
           ghostClass: 'ghost-item',
           chosenClass: 'chosen-item',
           dragClass: 'drag-item',
-          scrollSensitivity: 100,
+          scrollSensitivity: 30,
           preventDefaultOnDrag: true,
           lockAxis: 'y',
           lockToContainerEdges: true,
           fallbackOnBody: false,
-          scroll: true,
-          scrollSpeed: 50,
-          fallbackTolerance: 1,
-          touchAction: 'none'
+          scroll: false
         }"
         @start="onDragStart"
         @end="onDragEnd"
@@ -44,7 +41,7 @@
             <div class="item-content">
               {{ element.text }}
             </div>
-            <div class="item-position" :class="{ 'visible': element.id === draggingId || hoverIndex === index }">
+            <div class="item-position" :class="{ 'visible': true }">
               {{ index + 1 }}
             </div>
           </div>
@@ -55,6 +52,7 @@
     <div class="actions">
       <button class="check-button" @click="checkOrder">Comprobar</button>
       <button class="reset-button" @click="resetOrder">Reiniciar</button>
+      <button class="solution-button" @click="showSolution" v-if="resultMessage && !isCorrect">Ver solución</button>
     </div>
     
     <div v-if="resultMessage" class="result" :class="{ 'success': isCorrect, 'error': !isCorrect }">
@@ -151,6 +149,17 @@ const onChange = (e: any) => {
     if (window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(20)
     }
+    
+    // Actualizar las posiciones visualmente
+    setTimeout(() => {
+      const items = document.querySelectorAll('.list-group-item');
+      items.forEach((item, idx) => {
+        const position = item.querySelector('.item-position');
+        if (position) {
+          position.textContent = (idx + 1).toString();
+        }
+      });
+    }, 50);
   }
 }
 
@@ -383,15 +392,49 @@ const onDragEnd = () => {
     sparkle.remove()
   }, 500)
   
-  // Eliminamos cualquier elemento de arrastre residual
-  const dragElements = document.querySelectorAll('.sortable-drag');
-  dragElements.forEach(el => {
-    (el as HTMLElement).style.display = 'none';
-  });
-  
   // Resetear el id de arrastre
   draggingId.value = null
   resultMessage.value = ''
+}
+
+// Función para mostrar la solución correcta
+const showSolution = () => {
+  // Ordenamos los elementos según su posición correcta
+  const sortedItems = [...originalItems].sort((a, b) => a.correctPosition - b.correctPosition);
+  items.value = sortedItems;
+  
+  // Añadimos un mensaje indicando que esta es la solución correcta
+  resultMessage.value = '✨ Esta es la solución correcta ✨';
+  isCorrect.value = true;
+  
+  // Efecto visual para destacar la solución
+  setTimeout(() => {
+    const listItems = document.querySelectorAll('.list-group-item');
+    listItems.forEach((item, index) => {
+      setTimeout(() => {
+        item.classList.add('solution-highlight');
+        
+        // Efecto de sonido suave al mostrar cada elemento
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(600 + (index * 50), audioContext.currentTime);
+          gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.3);
+        } catch (e) {
+          // Ignorar errores de audio
+        }
+      }, index * 300);
+    });
+  }, 100);
 }
 </script>
 
@@ -519,24 +562,17 @@ h1::after {
   border: 2px dashed #ffb6c1 !important;
   max-width: 100%;
   box-sizing: border-box;
-  transform: translateY(0);
-  position: relative;
-  touch-action: none !important;
 }
 
 .chosen-item {
   transform: scale(1.02);
   box-shadow: 0 10px 20px rgba(255, 105, 180, 0.5);
   border-color: #ff69b4;
-  touch-action: none !important;
 }
 
 .drag-item {
   opacity: 0.8;
   background: linear-gradient(135deg, #fff5f9 0%, #ffecf2 100%);
-  touch-action: none !important;
-  position: fixed;
-  z-index: 1000;
 }
 
 .item-image {
@@ -591,9 +627,9 @@ h1::after {
   justify-content: center;
   color: #9d2f70;
   font-weight: bold;
-  opacity: 0;
-  transition: opacity 0.3s, transform 0.3s;
-  transform: scale(0.8);
+  opacity: 1;
+  transition: opacity 0.3s, transform 0.3s, background-color 0.3s;
+  transform: scale(1);
   margin-left: 10px;
   box-shadow: 0 3px 6px rgba(157, 47, 112, 0.2);
 }
@@ -608,6 +644,7 @@ h1::after {
   justify-content: center;
   gap: 1rem;
   margin-top: 2rem;
+  flex-wrap: wrap;
 }
 
 .check-button {
@@ -635,6 +672,21 @@ h1::after {
 
 .reset-button::before {
   content: "↺";
+  margin-right: 5px;
+}
+
+.solution-button {
+  background-color: #c5a3ff;
+  color: #6a3093;
+  border: 2px solid #8a5cdd;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.1rem;
+  position: relative;
+  margin-top: 0.5rem;
+}
+
+.solution-button::before {
+  content: "💡";
   margin-right: 5px;
 }
 
@@ -818,26 +870,70 @@ h1::after {
 @media (pointer: coarse) {
   .list-group-item {
     touch-action: none !important;
-    transform: translate3d(0, 0, 0);
-    will-change: transform;
-    margin-bottom: 1.5rem;
-    padding: 1.2rem;
-  }
-  
-  .ghost-item, .chosen-item, .drag-item {
-    will-change: transform;
-    transform: translate3d(0, 0, 0);
-    touch-action: none !important;
-  }
-  
-  .list-group {
-    touch-action: pan-y !important;
-    will-change: transform;
+    margin-bottom: 1.2rem;
   }
   
   .sort-game, .game-container {
     touch-action: pan-y !important;
-    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Estilo para el resaltado de la solución */
+.solution-highlight {
+  animation: highlightSolution 1s ease;
+  border-color: #ffa1d5;
+  box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
+}
+
+@keyframes highlightSolution {
+  0% {
+    transform: scale(1);
+    background-color: white;
+  }
+  50% {
+    transform: scale(1.05);
+    background-color: #fff0f7;
+  }
+  100% {
+    transform: scale(1);
+    background-color: white;
+  }
+}
+
+/* Estilos específicos para Desktop */
+@media (pointer: fine) {
+  :deep(.sortable-drag) {
+    display: flex !important;
+    align-items: center !important;
+    opacity: 0.9 !important;
+    background-color: #fff5f9 !important;
+    position: fixed !important; /* Cambiamos a fixed */
+    will-change: transform;
+    z-index: 1000 !important;
+    box-shadow: 0 10px 30px rgba(232, 67, 147, 0.6) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 15px !important;
+    border: 2px solid #ff69b4 !important;
+    box-sizing: border-box !important;
+    pointer-events: none !important;
+    margin-bottom: 0 !important;
+  }
+  
+  :deep(.sortable-ghost) {
+    height: 4rem !important;
+    min-height: 4rem !important;
+    background-color: rgba(255, 182, 193, 0.2) !important;
+    border: 2px dashed #ff69b4 !important;
+    margin: 0.5rem 0 !important;
+  }
+  
+  :deep(.sortable-drag .item-image),
+  :deep(.sortable-drag .item-content),
+  :deep(.sortable-drag .item-position) {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 }
 </style> 
