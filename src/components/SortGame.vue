@@ -344,33 +344,52 @@ const firePoopEmoji = () => {
 
 // Función para comprobar si el orden es correcto
 const checkOrder = () => {
-  let isOrderCorrect = true
+  let correctCount = 0;
+  const totalCount = items.value.length;
   
+  // Primero, resetear cualquier marcado anterior
+  const listItems = document.querySelectorAll('.list-group-item');
+  listItems.forEach(item => {
+    item.classList.remove('item-correct', 'item-incorrect', 'solution-highlight');
+  });
+  
+  // Comprobar cada elemento y marcar si está en la posición correcta
   for (let i = 0; i < items.value.length; i++) {
-    if (items.value[i].correctPosition !== i + 1) {
-      isOrderCorrect = false
-      break
+    if (items.value[i].correctPosition === i + 1) {
+      correctCount++;
+      listItems[i].classList.add('item-correct');
+    } else {
+      listItems[i].classList.add('item-incorrect');
     }
   }
   
+  // Determinar si el orden completo es correcto
+  const isOrderCorrect = correctCount === totalCount;
+  
   if (isOrderCorrect) {
-    isCorrect.value = true
-    resultMessage.value = '¡Muy bien! 🎉 ¡Has ordenado los vinos correctamente! 🥳 ¡Eres un/a experto/a en vinos! 💖'
-    fireConfetti()
-    playSound('correct')
+    isCorrect.value = true;
+    resultMessage.value = '¡Muy bien! 🎉 ¡Has ordenado los vinos correctamente! 🥳 ¡Eres un/a experto/a en vinos! 💖';
+    fireConfetti();
+    playSound('correct');
   } else {
-    resultMessage.value = '¡Ups! No está del todo bien 😢 ¡Intenta ordenarlos de nuevo! 💪🏻'
-    isCorrect.value = false
-    firePoopEmoji()
-    playSound('error')
+    isCorrect.value = false;
+    resultMessage.value = `¡Has acertado ${correctCount} de ${totalCount} vinos! 🍷 ¡Sigue intentándolo! 💪🏻`;
+    firePoopEmoji();
+    playSound('error');
   }
 }
 
 // Función para reiniciar el orden
 const resetOrder = () => {
-  items.value = shuffleArray(originalItems)
-  resultMessage.value = ''
-  isCorrect.value = false
+  // Limpiar las marcas de correctas e incorrectas
+  const listItems = document.querySelectorAll('.list-group-item');
+  listItems.forEach(item => {
+    item.classList.remove('item-correct', 'item-incorrect', 'solution-highlight');
+  });
+  
+  items.value = shuffleArray(originalItems);
+  resultMessage.value = '';
+  isCorrect.value = false;
 }
 
 // Maneja el evento onDragEnd
@@ -934,6 +953,75 @@ h1::after {
     display: flex !important;
     opacity: 1 !important;
     visibility: visible !important;
+  }
+}
+
+/* Estilos para elementos correctos e incorrectos */
+.item-correct {
+  border: 2px solid #4cd964 !important;
+  background-color: rgba(205, 255, 216, 0.2) !important;
+  animation: correctPulse 0.8s ease;
+}
+
+.item-correct::after {
+  content: "✅";
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  font-size: 1.5rem;
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.item-incorrect {
+  border: 2px solid #ff3b30 !important;
+  background-color: rgba(255, 235, 238, 0.2) !important;
+  animation: incorrectShake 0.8s ease;
+}
+
+.item-incorrect::after {
+  content: "❌";
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  font-size: 1.5rem;
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes correctPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(76, 217, 100, 0);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(76, 217, 100, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(76, 217, 100, 0);
+  }
+}
+
+@keyframes incorrectShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 </style> 
