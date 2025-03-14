@@ -400,7 +400,10 @@ const playUnlockSound = () => {
 };
 
 // Función para voltear una carta
-const flipCard = (index: number, event: MouseEvent) => {
+const flipCard = (index: number, event: MouseEvent | TouchEvent) => {
+  // Si se estaba arrastrando, no voltear
+  if (isDragging.value) return;
+  
   const card = cardsToShow.value[index];
   const originalIndex = getOriginalIndex(card);
   
@@ -508,19 +511,37 @@ const getCardPosition = (index: number) => {
   const card = cardsToShow.value[index];
   const originalIndex = getOriginalIndex(card);
   const isUnlocked = isCardUnlocked(card, originalIndex);
+  const isMobile = window.innerWidth <= 768;
   
-  // Las cartas bloqueadas se posicionan más a la derecha y escalonadas
-  if (!isUnlocked) {
-    return 60 + index * 15; // Más separación para las tarjetas bloqueadas
+  // Cálculos específicos para móviles para evitar que se salgan de la pantalla
+  if (isMobile) {
+    // Las cartas bloqueadas se posicionan de forma escalonada pero no demasiado a la derecha
+    if (!isUnlocked) {
+      return 40 + index * 10; // Valores reducidos para móviles
+    }
+    
+    // Las cartas desbloqueadas que no están volteadas, ligeramente escalonadas
+    if (!flippedCards.value[originalIndex]) {
+      return 15 + index * 3; // Valores más pequeños para evitar salirse de la pantalla
+    }
+    
+    // Las cartas desbloqueadas y volteadas se posicionan al centro
+    return 0;
+  } else {
+    // Comportamiento original para pantallas grandes
+    // Las cartas bloqueadas se posicionan más a la derecha y escalonadas
+    if (!isUnlocked) {
+      return 60 + index * 15; // Más separación para las tarjetas bloqueadas
+    }
+    
+    // Las cartas desbloqueadas que no están volteadas, un poco a la derecha
+    if (!flippedCards.value[originalIndex]) {
+      return 20 + index * 5;
+    }
+    
+    // Las cartas desbloqueadas y volteadas se posicionan al centro
+    return 0;
   }
-  
-  // Las cartas desbloqueadas que no están volteadas, un poco a la derecha
-  if (!flippedCards.value[originalIndex]) {
-    return 20 + index * 5;
-  }
-  
-  // Las cartas desbloqueadas y volteadas se posicionan al centro
-  return 0;
 };
 
 // Función para calcular la rotación de las cartas
@@ -528,19 +549,37 @@ const getCardRotation = (index: number) => {
   const card = cardsToShow.value[index];
   const originalIndex = getOriginalIndex(card);
   const isUnlocked = isCardUnlocked(card, originalIndex);
+  const isMobile = window.innerWidth <= 768;
   
-  // Si la carta está bloqueada, inclinarla más
-  if (!isUnlocked) {
-    return 8 + index * 3; // Mayor rotación para las bloqueadas
+  // Rotación reducida para dispositivos móviles
+  if (isMobile) {
+    // Si la carta está bloqueada, inclinarla ligeramente
+    if (!isUnlocked) {
+      return 5 + index * 2; // Menor rotación para evitar problemas en móviles
+    }
+    
+    // Si está volteada, sin rotación
+    if (flippedCards.value[originalIndex]) {
+      return 0;
+    }
+    
+    // Rotación muy leve para las demás
+    return 1 + index * 0.5;
+  } else {
+    // Comportamiento original para pantallas grandes
+    // Si la carta está bloqueada, inclinarla más
+    if (!isUnlocked) {
+      return 8 + index * 3; // Mayor rotación para las bloqueadas
+    }
+    
+    // Si está volteada, sin rotación
+    if (flippedCards.value[originalIndex]) {
+      return 0;
+    }
+    
+    // Ligera rotación para las demás
+    return 2 + index * 1;
   }
-  
-  // Si está volteada, sin rotación
-  if (flippedCards.value[originalIndex]) {
-    return 0;
-  }
-  
-  // Ligera rotación para las demás
-  return 2 + index * 1;
 };
 
 // Función para lanzar confeti
@@ -747,13 +786,12 @@ const resetAppData = () => {
 
 // Manejar inicio del toque
 const handleTouchStart = (event: TouchEvent, index: number) => {
-  // Prevenir el comportamiento predeterminado para evitar desplazamientos no deseados
-  event.preventDefault();
-  
-  // Guarda la posición X inicial del toque
+  // Guardamos la posición X inicial del toque
   startX.value = event.touches[0].clientX;
   isDragging.value = false;
   currentCardIndex.value = index;
+  
+  // No llamamos a preventDefault() para permitir que funcionen los toques normales
 };
 
 // Manejar movimiento durante el toque
@@ -779,19 +817,27 @@ const handleTouchMove = (event: TouchEvent) => {
       dragOffset.value = diffX * resistance;
     }
     
-    // Prevenir scroll si estamos arrastrando
-    event.preventDefault();
+    // Una vez que estamos arrastrando, prevenir el scroll
+    if (isDragging.value) {
+      event.preventDefault();
+    }
   }
 };
 
 // Manejar fin del toque
 const handleTouchEnd = () => {
-  if (isDragging.value) {
+  // Si no hubo arrastre (solo un toque), intentar voltear la tarjeta
+  if (!isDragging.value && currentCardIndex.value !== -1) {
+    // Llamar a flipCard para el toque (sin arrastre)
+    const cardIndex = currentCardIndex.value;
+    const fakeEvent = new MouseEvent('click');
+    flipCard(cardIndex, fakeEvent);
+  } else if (isDragging.value) {
+    // Resetear estado de arrastre
     isDragging.value = false;
     
-    // Animación de rebote al soltar con efecto de resorte
+    // Animación de rebote al soltar
     const springEffect = () => {
-      // Reducir gradualmente el desplazamiento para crear efecto de rebote
       if (Math.abs(dragOffset.value) < 2) {
         dragOffset.value = 0;
         return;
@@ -804,6 +850,7 @@ const handleTouchEnd = () => {
     springEffect();
   }
   
+  // Resetear el índice de la tarjeta actual
   currentCardIndex.value = -1;
 };
 
@@ -1401,15 +1448,6 @@ h1::after {
   }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
 .viewed-cards-section {
   margin-top: 3rem;
   width: 100%;
@@ -1582,7 +1620,9 @@ h1::after {
 /* Estilos responsivos */
 @media (max-width: 768px) {
   .cards-home {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 0.8rem;
+    max-width: 100%;
+    overflow-x: hidden; /* Prevenir scroll horizontal */
   }
   
   h1 {
@@ -1597,14 +1637,6 @@ h1::after {
     margin: 0 5px;
   }
   
-  h1::before {
-    left: 0;
-  }
-  
-  h1::after {
-    right: 0;
-  }
-  
   .subtitle {
     font-size: 1rem;
     margin-bottom: 1.5rem;
@@ -1613,44 +1645,59 @@ h1::after {
   .time-banner {
     margin-bottom: 1.5rem;
     padding: 0.5rem 1rem;
+    width: 90%;
+  }
+  
+  .timer-label {
+    font-size: 1rem;
   }
   
   .current-time {
     font-size: 1.4rem;
+    padding: 0.2rem 0.8rem;
   }
   
   .cards-container {
-    height: 400px; /* Altura suficiente para mostrar la tarjeta completa */
+    height: 380px;
     max-width: 100%;
+    width: 290px; /* Ancho fijo más pequeño para contener las tarjetas */
     padding: 0;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
     overflow: visible;
     perspective: 1200px;
   }
   
   .card {
-    width: 260px; /* Tamaño de tarjeta para pantallas medianas */
-    height: 350px;
+    width: 240px; /* Tamaño reducido para móviles */
+    height: 340px;
     left: 50%;
     transform-origin: center center;
-    margin-left: -130px; /* La mitad del ancho para centrar correctamente */
+    margin-left: -182px; /* La mitad del ancho para centrar */
   }
   
   /* Ajustar posición en dispositivos pequeños */
   @media (max-width: 360px) {
+    .cards-container {
+      width: 240px;
+    }
+    
     .card {
-      width: 230px;
+      width: 220px;
       height: 320px;
-      margin-left: -115px; /* La mitad del ancho para centrar correctamente */
+      margin-left: -110px;
     }
   }
 
-  /* Ajuste adicional para dispositivos muy pequeños */
+  /* Ajustes para dispositivos muy pequeños */
   @media (max-width: 320px) {
+    .cards-container {
+      width: 220px;
+    }
+    
     .card {
-      width: 210px;
+      width: 200px;
       height: 300px;
-      margin-left: -105px;
+      margin-left: -100px;
     }
     
     .card-content h3 {
@@ -1668,7 +1715,13 @@ h1::after {
   }
   
   .card-front .card-decoration {
-    font-size: 4rem;
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+  }
+  
+  .card-time {
+    font-size: 1rem;
+    padding: 0.2rem 0.6rem;
   }
   
   .card-content h3 {
@@ -1679,43 +1732,47 @@ h1::after {
   .card-content p {
     font-size: 0.95rem;
     line-height: 1.3;
-    max-height: 180px;
+    max-height: 160px;
+    padding: 0 5px;
     overflow-y: auto;
     padding-right: 5px;
-  }
-  
-  /* Ajuste del posicionamiento de las tarjetas */
-  .getCardPosition, .getCardRotation {
-    /* Reducir valores para evitar que las tarjetas se salgan */
-    transform: scale(0.95);
-  }
-  
-  /* Mejoras para tarjetas bloqueadas */
-  .card-locked {
-    top: 5px; /* Desplazar ligeramente hacia abajo */
-    transform: scale(0.9) !important;
   }
   
   /* Indicador visual de deslizamiento */
   .cards-container::after {
     content: "↔️ Desliza para ver más";
     position: absolute;
-    bottom: -25px;
+    bottom: -28px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.9rem;
     color: #b15b88;
     opacity: 0.8;
+    width: 100%;
+    text-align: center;
     animation: pulse 2s infinite;
   }
   
+  .viewed-cards-section {
+    margin-top: 2.5rem;
+  }
+  
   .viewed-card {
-    width: 170px;
-    height: 280px;
+    width: 160px;
+    height: 260px;
   }
   
   .viewed-cards-container {
-    gap: 1rem;
+    gap: 0.8rem;
+  }
+  
+  .viewed-title {
+    font-size: 1.5rem;
+  }
+  
+  .viewed-title::before,
+  .viewed-title::after {
+    font-size: 1.2rem;
   }
 }
 
