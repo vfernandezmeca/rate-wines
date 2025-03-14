@@ -28,7 +28,7 @@
         @touchmove="handleTouchMove($event)"
         @touchend="handleTouchEnd()"
         :style="{ 
-          transform: `translateX(${getCardPosition(index) + dragOffset}px) rotate(${getCardRotation(index)}deg)`,
+          transform: getCardTransform(index, card),
           transition: isDragging ? 'none' : 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
         }"
       >
@@ -854,6 +854,22 @@ const handleTouchEnd = () => {
   currentCardIndex.value = -1;
 };
 
+// Función para obtener la transformación completa de la tarjeta
+const getCardTransform = (index: number, card: Card) => {
+  const originalIndex = getOriginalIndex(card);
+  const isFlipped = flippedCards.value[originalIndex];
+  const posX = getCardPosition(index) + dragOffset.value;
+  const rotation = getCardRotation(index);
+  
+  // Si la tarjeta está volteada, mantener su posición X y añadir rotateY
+  if (isFlipped) {
+    return `translateX(${posX}px) rotate(${rotation}deg) rotateY(180deg)`;
+  }
+  
+  // Si no está volteada, aplicar la transformación normal
+  return `translateX(${posX}px) rotate(${rotation}deg)`;
+};
+
 // Al montar el componente
 onMounted(() => {
   // Iniciar el reloj
@@ -1136,11 +1152,10 @@ h1::after {
 }
 
 .card-flipped {
-  transform: rotateY(180deg) !important;
   z-index: 3;
   
   &:hover {
-    transform: rotateY(180deg) translateY(-10px) !important;
+    transform: translateY(-10px) rotateY(180deg) !important;
   }
 }
 
@@ -1501,7 +1516,7 @@ h1::after {
   margin-bottom: 15px;
   
   &:hover {
-    transform: rotateY(180deg) translateY(-5px);
+    transform: translateY(-5px) rotateY(180deg);
     box-shadow: 0 8px 15px rgba(255, 105, 180, 0.3);
   }
   
