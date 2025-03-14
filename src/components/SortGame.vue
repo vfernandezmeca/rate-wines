@@ -43,12 +43,12 @@
       {{ resultMessage }}
     </div>
     
-    <!-- Contenedor para los emojis de mierda -->
+    <!-- Contenedor para los emojis decorativos -->
     <div class="poop-container" ref="poopContainer">
       <div v-for="(poop, index) in poopEmojis" :key="index" 
            class="poop-emoji" 
            :style="{ left: poop.left + 'px', animationDuration: poop.duration + 's' }">
-        💩
+        🌟
       </div>
     </div>
   </div>
@@ -67,12 +67,12 @@ interface Item {
 }
 
 const originalItems = [
-  { id: 1, text: 'VINO ALABA BLANCO', correctPosition: 1, img: 'https://a0.soysuper.com/4934fd0efcb3e6b953fa1434574a62a9.1500.0.0.0.wmark.0ae9bf8b.jpg'},
-  { id: 2, text: 'VINO FOUR LINES', correctPosition: 2, img: 'https://sgfm.elcorteingles.es/SGFM/dctm/MEDIA03/201610/25/00118766301529____2__600x600.jpg' },
-  { id: 3, text: 'VINO LEGARIS BLANCO', correctPosition: 3, img: 'https://www.bodeboca.com/sites/default/files/wines/2024-05/bot-legaris-suavignon-blanc-2019_0_0.jpg' },
-  { id: 4, text: 'VINO CUNE AFRUTADO', correctPosition: 4, img: 'https://solowine.es/wp-content/uploads/2023/12/Cune-Afrutado-rioja-1-thumbnail-2000x2000-80.jpg' },
-  { id: 5, text: 'VINO BACH SEMIDULCE', correctPosition: 5, img: 'https://vinopremier.com/media/catalog/product/cache/070e1948fa79794c1092c01c58a07334/1/5/1544730970.jpeg'},
-  { id: 6, text: 'VINO BOCA BLANCO', correctPosition: 6, img: 'https://a0.soysuper.com/1669c8b5facc3bdf75373e324e81ebcb.1500.0.0.0.wmark.31316d64.jpg' }
+  { id: 1, text: '✨ VINO ALABA BLANCO ✨', correctPosition: 1, img: 'https://a0.soysuper.com/4934fd0efcb3e6b953fa1434574a62a9.1500.0.0.0.wmark.0ae9bf8b.jpg'},
+  { id: 2, text: '🌟 VINO FOUR LINES 🌟', correctPosition: 2, img: 'https://sgfm.elcorteingles.es/SGFM/dctm/MEDIA03/201610/25/00118766301529____2__600x600.jpg' },
+  { id: 3, text: '🥂 VINO LEGARIS BLANCO 🥂', correctPosition: 3, img: 'https://www.bodeboca.com/sites/default/files/wines/2024-05/bot-legaris-suavignon-blanc-2019_0_0.jpg' },
+  { id: 4, text: '🍇 VINO CUNE AFRUTADO 🍇', correctPosition: 4, img: 'https://solowine.es/wp-content/uploads/2023/12/Cune-Afrutado-rioja-1-thumbnail-2000x2000-80.jpg' },
+  { id: 5, text: '🍷 VINO BACH SEMIDULCE 🍷', correctPosition: 5, img: 'https://vinopremier.com/media/catalog/product/cache/070e1948fa79794c1092c01c58a07334/1/5/1544730970.jpeg'},
+  { id: 6, text: '💖 VINO BOCA BLANCO 💖', correctPosition: 6, img: 'https://a0.soysuper.com/1669c8b5facc3bdf75373e324e81ebcb.1500.0.0.0.wmark.31316d64.jpg' }
 ]
 
 // Mezclar los elementos para el inicio del juego
@@ -94,291 +94,378 @@ const poopContainer = ref<HTMLElement | null>(null)
 onMounted(() => {
   // Mezclar los elementos al montar el componente
   items.value = shuffleArray(originalItems)
+  
+  // Crear sparkles decorativos
+  const sparklesContainer = document.createElement('div')
+  sparklesContainer.className = 'sparkles'
+  
+  for (let i = 0; i < 20; i++) {
+    const sparkle = document.createElement('div')
+    sparkle.className = 'sparkle'
+    sparkle.style.left = `${Math.random() * 100}%`
+    sparkle.style.top = `${Math.random() * 100}%`
+    sparkle.style.transform = `scale(${0.5 + Math.random() * 0.5})`
+    sparklesContainer.appendChild(sparkle)
+  }
+  
+  document.querySelector('.sort-game')?.appendChild(sparklesContainer)
 })
 
 // Función para lanzar confeti cuando el usuario gana
 const fireConfetti = () => {
-  const duration = 3 * 1000
-  const animationEnd = Date.now() + duration
-  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }
-
-  const randomInRange = (min: number, max: number) => {
-    return Math.random() * (max - min) + min
+  // Crear un efecto de confeti más cute con corazones y estrellas
+  const count = 200
+  const defaults = {
+    origin: { y: 0.7 },
+    zIndex: 9999
   }
 
-  const interval = setInterval(() => {
-    const timeLeft = animationEnd - Date.now()
+  // Confeti normal de colores pastel
+  confetti({
+    ...defaults,
+    particleCount: count * 0.25,
+    colors: ['#ffb6c1', '#ffd1dc', '#f5c7f7', '#e0cffc', '#c5f9cc'],
+    spread: 100,
+  })
 
-    if (timeLeft <= 0) {
-      return clearInterval(interval)
-    }
+  // Confeti en forma de corazones (usando emoji como textos)
+  setTimeout(() => {
+    confetti({
+      ...defaults,
+      particleCount: count * 0.2,
+      colors: ['#ff6ec4', '#ff8dce', '#e84393'],
+      shapes: ['circle'],
+      scalar: 2,
+    })
+  }, 500)
 
-    const particleCount = 50 * (timeLeft / duration)
+  // Efecto final con confeti más grande
+  setTimeout(() => {
+    confetti({
+      ...defaults,
+      particleCount: count * 0.35,
+      angle: 120,
+      spread: 120,
+      origin: { x: 0 },
+      colors: ['#ffb6c1', '#ffd1dc', '#ff8dce', '#ff6ec4'],
+    })
     
-    // Lanzar confeti desde diferentes ángulos
     confetti({
       ...defaults,
-      particleCount,
-      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      particleCount: count * 0.35,
+      angle: 60,
+      spread: 120,
+      origin: { x: 1 },
+      colors: ['#f5c7f7', '#e0cffc', '#ff8dce', '#ff6ec4'],
     })
-    confetti({
-      ...defaults,
-      particleCount,
-      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-    })
-  }, 250)
+  }, 1000)
 }
 
-// Función para mostrar emojis de mierda cuando el usuario pierde
-const showPoopEmojis = () => {
-  // Limpiar cualquier emoji previo
+// Modificar el emoji de mierda por algo más cute
+const firePoopEmoji = () => {
+  if (!poopContainer.value) return
+
+  // Borrar los emojis existentes
   poopEmojis.value = []
-  
+
   // Crear nuevos emojis
-  const containerWidth = poopContainer.value?.offsetWidth || 600
-  const numberOfEmojis = 15
-  
+  const containerWidth = poopContainer.value.offsetWidth
+  const numberOfEmojis = 30
+  const newEmojis = []
+
   for (let i = 0; i < numberOfEmojis; i++) {
-    poopEmojis.value.push({
+    newEmojis.push({
       left: Math.random() * containerWidth,
-      duration: 2 + Math.random() * 3
+      duration: 3 + Math.random() * 4 // Duración entre 3 y 7 segundos
     })
   }
+
+  poopEmojis.value = newEmojis
 }
 
+// Función para comprobar si el orden es correcto
 const checkOrder = () => {
-  const correctOrder = items.value.every((item, index) => item.correctPosition === index + 1)
+  let isOrderCorrect = true
   
-  if (correctOrder) {
-    resultMessage.value = '¡Correcto! Has ordenado todos los elementos correctamente.'
+  for (let i = 0; i < items.value.length; i++) {
+    if (items.value[i].correctPosition !== i + 1) {
+      isOrderCorrect = false
+      break
+    }
+  }
+  
+  if (isOrderCorrect) {
     isCorrect.value = true
-    // Lanzar confeti
+    resultMessage.value = '¡Muy bien! 🎉 ¡Has ordenado los vinos correctamente! 🥳 ¡Eres un/a experto/a en vinos! 💖'
     fireConfetti()
   } else {
-    resultMessage.value = 'Incorrecto. Intenta ordenarlos nuevamente.'
+    resultMessage.value = '¡Ups! No está del todo bien 😢 ¡Intenta ordenarlos de nuevo! 💪🏻'
     isCorrect.value = false
-    // Mostrar emojis de mierda
-    showPoopEmojis()
+    firePoopEmoji()
   }
 }
 
+// Función para reiniciar el orden
 const resetOrder = () => {
   items.value = shuffleArray(originalItems)
   resultMessage.value = ''
-  // Limpiar emojis
-  poopEmojis.value = []
+  isCorrect.value = false
 }
 
+// Maneja el evento onDragEnd
 const onDragEnd = () => {
+  // Puedes añadir un pequeño sonido o efecto aquí si quieres
   resultMessage.value = ''
-  // Limpiar emojis
-  poopEmojis.value = []
 }
 </script>
 
 <style lang="scss" scoped>
 .sort-game {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  position: relative; // Para posicionamiento absoluto de emojis y confeti
-
-  h1 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 20px;
-  }
-
-  .instructions {
-    margin-bottom: 20px;
-    color: #666;
-    text-align: center;
-  }
-
-  .game-container {
-    margin-bottom: 20px;
-  }
-
-  .list-group-item {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    margin-bottom: 10px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-left: 5px solid #007bff;
-    touch-action: none; 
-    user-select: none; 
-
-    .handle {
-      margin-right: 15px;
-      color: #aaa;
-      cursor: grab;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      i {
-        font-size: 16px;
-      }
-    }
-
-    .item-image {
-      width: 60px;
-      height: 60px;
-      margin-right: 15px;
-      border-radius: 5px;
-      overflow: hidden;
-      flex-shrink: 0;
-
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    }
-
-    .item-content {
-      flex-grow: 1;
-      font-size: 16px;
-      color: #333;
-    }
-  }
-
-  .actions {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-
-    button {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s;
-      font-size: 16px;
-    }
-  }
-
-  .check-button {
-    background-color: #4CAF50;
-    color: white;
-
-    &:hover {
-      background-color: #3e8e41;
-    }
-  }
-
-  .reset-button {
-    background-color: #f44336;
-    color: white;
-
-    &:hover {
-      background-color: #d32f2f;
-    }
-  }
-
-  .result {
-    padding: 15px;
-    border-radius: 5px;
-    text-align: center;
-    margin-top: 20px;
-    font-weight: bold;
-
-    &.success {
-      background-color: #dff0d8;
-      color: #3c763d;
-    }
-
-    &.error {
-      background-color: #f2dede;
-      color: #a94442;
-    }
-  }
-  
-  // Estilos para los emojis de mierda
-  .poop-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; // Para que no interfieran con los clicks
-    overflow: hidden;
-    z-index: 10;
-    
-    .poop-emoji {
-      position: absolute;
-      top: -50px;
-      font-size: 30px;
-      animation: fall linear forwards;
-      z-index: 100;
-    }
-  }
+  padding: 2rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(255, 105, 180, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
-// Animación para la caída de emojis
-@keyframes fall {
+.sort-game::before {
+  content: "🌸";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 1.5rem;
+}
+
+.sort-game::after {
+  content: "🌸";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+}
+
+h1 {
+  color: #e84393;
+  font-family: 'Comic Sans MS', 'Marker Felt', cursive;
+  text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+h1::before {
+  content: "🍷";
+  position: absolute;
+  left: -40px;
+  top: 5px;
+}
+
+h1::after {
+  content: "🍷";
+  position: absolute;
+  right: -40px;
+  top: 5px;
+}
+
+.instructions {
+  color: #b15b88;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+  position: relative;
+  display: inline-block;
+}
+
+.instructions::before {
+  content: "✨";
+  margin-right: 10px;
+}
+
+.instructions::after {
+  content: "✨";
+  margin-left: 10px;
+}
+
+.game-container {
+  margin: 2rem 0;
+  background-color: rgba(255, 218, 233, 0.5);
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 2px dashed #ffb6c1;
+}
+
+.list-group-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+  border: 2px solid #ffd1dc;
+  transition: all 0.3s;
+}
+
+.list-group-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(255, 182, 193, 0.4);
+}
+
+.handle {
+  cursor: grab;
+  padding: 0.5rem;
+  color: #ff6ec4;
+  font-size: 1.2rem;
+}
+
+.handle::before {
+  content: "👆";
+  margin-right: 5px;
+}
+
+.item-image {
+  width: 60px;
+  height: 60px;
+  margin-right: 1rem;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 3px solid #ffc0cb;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-content {
+  flex-grow: 1;
+  color: #b15b88;
+  font-weight: bold;
+  font-family: 'Comic Sans MS', 'Marker Felt', cursive;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.check-button {
+  background-color: #ffb8e9;
+  color: #9d2f70;
+  border: 2px solid #ff69b4;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.check-button::before {
+  content: "✓";
+  margin-right: 5px;
+}
+
+.reset-button {
+  background-color: #f5c7f7;
+  color: #8e42a4;
+  border: 2px solid #cf8de7;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.reset-button::before {
+  content: "↺";
+  margin-right: 5px;
+}
+
+.result {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 15px;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.success {
+  background-color: rgba(205, 255, 216, 0.7);
+  color: #2b9464;
+  border: 2px solid #a3f9b9;
+}
+
+.error {
+  background-color: rgba(255, 235, 238, 0.7);
+  color: #e84393;
+  border: 2px solid #ffc2cc;
+}
+
+.poop-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.poop-emoji {
+  position: absolute;
+  bottom: -50px;
+  animation: fallAnimation linear forwards;
+  font-size: 2rem;
+}
+
+@keyframes fallAnimation {
   0% {
-    transform: translateY(-20px) rotate(0deg);
+    transform: translateY(0) rotate(0deg);
     opacity: 0;
   }
   10% {
     opacity: 1;
   }
+  90% {
+    opacity: 1;
+  }
   100% {
-    transform: translateY(800px) rotate(360deg);
+    transform: translateY(-120vh) rotate(360deg);
     opacity: 0;
   }
 }
 
-/* Estilos específicos para móviles */
-@media (max-width: 600px) {
-  .sort-game {
-    padding: 15px;
-
-    h1 {
-      font-size: 24px;
-    }
-    
-    .list-group-item {
-      padding: 12px;
-
-      .item-image {
-        width: 50px;
-        height: 50px;
-        margin-right: 10px;
-      }
-
-      .item-content {
-        font-size: 14px;
-      }
-    }
-    
-    .actions {
-      flex-direction: column;
-
-      button {
-        padding: 15px;
-        width: 100%;
-      }
-    }
-    
-    .handle {
-      padding: 10px;
-
-      i {
-        font-size: 20px;
-      }
-    }
-    
-    .poop-emoji {
-      font-size: 24px;
-    }
+@keyframes pulse {
+  0% {
+    transform: scale(1);
   }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Decoraciones adicionales */
+.sparkles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.sparkle {
+  position: absolute;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffb6c1"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5-6.5-5-6.5 5 2.5-7.5-6-4.5h7.5z"/></svg>');
+  background-repeat: no-repeat;
+  width: 20px;
+  height: 20px;
+  opacity: 0.6;
 }
 </style> 

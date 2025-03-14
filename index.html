@@ -4,16 +4,53 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#4CAF50" />
-    <meta name="description" content="Juego de ordenar vinos para dispositivos móviles" />
+    <meta name="theme-color" content="#ff6ec4" />
+    <meta name="description" content="Juego super cute de ordenar vinos para dispositivos móviles" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <title>Juego de Ordenar Vinos</title>
+    <link rel="stylesheet" href="./cute-theme.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
+    <title>Juego Cute de Ordenar Vinos</title>
   </head>
   <body>
     <div id="app"></div>
+    <div class="heart-bg" id="heartBg"></div>
     <script type="module" src="./src/main.ts"></script>
+    <script>
+      // Crear corazones animados en el fondo
+      document.addEventListener('DOMContentLoaded', function() {
+        const heartBg = document.getElementById('heartBg');
+        const numHearts = 15;
+        
+        for (let i = 0; i < numHearts; i++) {
+          const heart = document.createElement('div');
+          heart.className = 'heart';
+          heart.style.left = `${Math.random() * 100}%`;
+          heart.style.animationDuration = `${15 + Math.random() * 10}s`;
+          heart.style.animationDelay = `${Math.random() * 5}s`;
+          heart.style.opacity = `${0.1 + Math.random() * 0.3}`;
+          heart.style.transform = `scale(${0.5 + Math.random()})`;
+          heartBg.appendChild(heart);
+        }
+
+        // Efecto de brillo al hacer clic
+        document.addEventListener('click', function(e) {
+          const sparkle = document.createElement('div');
+          sparkle.className = 'sparkle-animation';
+          sparkle.style.left = `${e.pageX - 15}px`;
+          sparkle.style.top = `${e.pageY - 15}px`;
+          sparkle.style.width = '30px';
+          sparkle.style.height = '30px';
+          sparkle.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffb6c1"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/></svg>')`;
+          document.body.appendChild(sparkle);
+          
+          setTimeout(() => {
+            sparkle.remove();
+          }, 700);
+        });
+      });
+    </script>
   </body>
 </html>
