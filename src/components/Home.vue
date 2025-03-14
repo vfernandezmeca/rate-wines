@@ -154,14 +154,14 @@ const cards = ref<Card[]>([
     title: "Hora de comer",
     message: "Vamos a McDonald's para disfrutar de una rica comida.",
     icon: "🍔",
-    unlockTime: "08:10", // Se desbloquea a las 13:00
+    unlockTime: "14:00", // Se desbloquea a las 13:00
     viewed: false
   },
   {
     title: "¡Vámonos de compras!",
     message: "¡CUPÓN DORADO! 🎖️ Esta tarjeta es un cupón especial para que elijas cualquier producto que te guste en Sephora en tu día especial. ¡Regalo de cumpleaños!",
     icon: "🛍️",
-    unlockTime: "08:11", // Se desbloquea a las 17:00
+    unlockTime: "17:00", // Se desbloquea a las 17:00
     viewed: false,
     hasGoldenCoupon: true
   },
@@ -169,14 +169,14 @@ const cards = ref<Card[]>([
     title: "¡Dulce Japón!",
     message: "¡Parada en una tienda japonesa! Vamos a comprar chuches random para seguir con la diversión.",
     icon: "🍬",
-    unlockTime: "08:12", // Se desbloquea a las 17:30
+    unlockTime: "17:30", // Se desbloquea a las 17:30
     viewed: false
   },
   {
     title: "¡Juega y diviértete!",
     message: "Para continuar con la celebración, un juego especial de vinos que hemos preparado para ti. ¡A ver qué tal se te da ordenarlos!",
     icon: "🍷",
-    unlockTime: "08:13", // Se desbloquea a las 18:15
+    unlockTime: "18:15", // Se desbloquea a las 18:15
     isGame: true,
     viewed: false
   },
@@ -184,21 +184,21 @@ const cards = ref<Card[]>([
     title: "¡Arte para recordar!",
     message: "Toca hacernos un retrato para inmortalizar este día tan especial. ¡Una obra de arte para un día inolvidable!",
     icon: "🖼️",
-    unlockTime: "08:14", // Se desbloquea a las 19:00
+    unlockTime: "19:00", // Se desbloquea a las 19:00
     viewed: false
   },
   {
     title: "¡Momento de deseos!",
     message: "Ha llegado el momento de soplar las velas. ¡Pide un deseo muy especial en este día tan importante!",
     icon: "🎂",
-    unlockTime: "08:15", // Se desbloquea a las 19:30
+    unlockTime: "19:30", // Se desbloquea a las 19:30
     viewed: false
   },
   {
     title: "¡Cena especial!",
     message: "Para terminar este día maravilloso, vamos a disfrutar de una deliciosa cena de sushi. ¡El broche perfecto para tu cumpleaños!",
     icon: "🍣",
-    unlockTime: "08:16", // Se desbloquea a las 20:00
+    unlockTime: "20:00", // Se desbloquea a las 20:00
     viewed: false
   }
 ]);
